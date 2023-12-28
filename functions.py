@@ -4,11 +4,13 @@ import psycopg2
 from io import BytesIO
 import csv, os
 from reportlab.lib import colors
+import PySimpleGUI as sg
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
-
+layoutMain= []
+information_array = []
 conn = psycopg2.connect(dbname='Authentication', user='postgres', password=' ')
-
+window = sg.Window('Window Title',  layoutMain, size = (1000, 600), resizable = True, element_justification = 'center')
 def get_data_from_db(worker_id):
     # Здесь ваш запрос PostgreSQL
     with conn.cursor() as curs:
@@ -114,3 +116,60 @@ def CreateReport(id_worker, name, body):
         print(data[0])
         curs.execute(f'''insert into work (work_id, work_name, work_report, worker_id) VALUES ({data[0]+1}, '{name}', '{body}', {id_worker})''')
         conn.commit()
+        
+def employer(employer_login):
+    with conn.cursor() as curs:            
+            curs.execute(f'''select worker_login, worker_name from worker 
+                             where worker_company = (select employer_company from employer 
+					                                where employer_login = '{employer_login}') ''')
+            data = curs.fetchall()
+            print(data, len(data))
+            for i in range(len(data)):
+                information_array.append(str([data[i][1]])[2:-2])
+            window.Element('list').Update(values = information_array)
+    
+
+
+def ChangeProfileHide(status, bool):
+    # window.Element(f'LoginAcc{status}').Update(visible = bool)
+    window.Element(f'FullNameAcc{status}').Update(visible = bool)
+    window.Element(f'PasswordAcc{status}').Update(visible = bool)
+    window.Element(f'CompanyAcc{status}').Update(visible = bool)
+    window.Element(f'EditProfile{status}').Update(visible = bool)
+    window.Element(f'SaveChages{status}').Update(visible = bool)
+
+def ChangeProfileShow(status, bool):
+    # window.Element(f'LoginAcc{status}Change').Update(visible = bool)
+    window.Element(f'FullNameAcc{status}Change').Update(visible = bool)
+    window.Element(f'PasswordAcc{status}Change').Update(visible = bool)
+    window.Element(f'CompanyAcc{status}Change').Update(visible = bool)
+    window.Element(f'Cancel{status}').Update(visible = bool)
+    window.Element(f'SaveChages{status}').Update(visible = bool)
+
+
+
+def ShowEvents(status, login):
+    with conn.cursor() as curs:
+        curs.execute(f'''select event_name, event_date from event where {status}_id = (select {status}_id from {status} 
+										where {status}_login = '{login}') ''')
+        events = curs.fetchall()
+        information_array.clear()
+        string = ''
+        for i in range(len(events)):
+                string = events[i][0] + ', ' + events[i][1]
+                information_array.append(string)
+        if status == 'employer':
+            window.Element('listEventsEmpl').Update(values = information_array)
+        elif status == 'worker':
+            window.Element('listEventsWorker').Update(values = information_array)
+
+
+def AddEvent(status, name, date, login):
+    with conn.cursor() as curs:
+        curs.execute(f'''select count(*) from event''')
+        id = curs.fetchone()
+        curs.execute(f'''select {status}_id from {status} where {status}_login = '{login}' ''')
+        id_human = curs.fetchone()
+        curs.execute(f'''insert into event (event_id, event_name, event_date, {status}_id) values ({id[0]+1}, '{name}', '{date}', {id_human[0]})''')       
+        conn.commit()
+        ShowEvents(status=status, login=login)  

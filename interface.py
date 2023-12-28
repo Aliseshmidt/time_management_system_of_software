@@ -156,62 +156,7 @@ layoutMain = [
     ]
     ]
 
-def employer(employer_login):
-    with conn.cursor() as curs:            
-            curs.execute(f'''select worker_login, worker_name from worker 
-                             where worker_company = (select employer_company from employer 
-					                                where employer_login = '{employer_login}') ''')
-            data = curs.fetchall()
-            print(data, len(data))
-            for i in range(len(data)):
-                information_array.append(str([data[i][1]])[2:-2])
-            window.Element('list').Update(values = information_array)
-    
 
-
-def ChangeProfileHide(status, bool):
-    # window.Element(f'LoginAcc{status}').Update(visible = bool)
-    window.Element(f'FullNameAcc{status}').Update(visible = bool)
-    window.Element(f'PasswordAcc{status}').Update(visible = bool)
-    window.Element(f'CompanyAcc{status}').Update(visible = bool)
-    window.Element(f'EditProfile{status}').Update(visible = bool)
-    window.Element(f'SaveChages{status}').Update(visible = bool)
-
-def ChangeProfileShow(status, bool):
-    # window.Element(f'LoginAcc{status}Change').Update(visible = bool)
-    window.Element(f'FullNameAcc{status}Change').Update(visible = bool)
-    window.Element(f'PasswordAcc{status}Change').Update(visible = bool)
-    window.Element(f'CompanyAcc{status}Change').Update(visible = bool)
-    window.Element(f'Cancel{status}').Update(visible = bool)
-    window.Element(f'SaveChages{status}').Update(visible = bool)
-
-
-
-def ShowEvents(status, login):
-    with conn.cursor() as curs:
-        curs.execute(f'''select event_name, event_date from event where {status}_id = (select {status}_id from {status} 
-										where {status}_login = '{login}') ''')
-        events = curs.fetchall()
-        information_array.clear()
-        string = ''
-        for i in range(len(events)):
-                string = events[i][0] + ', ' + events[i][1]
-                information_array.append(string)
-        if status == 'employer':
-            window.Element('listEventsEmpl').Update(values = information_array)
-        elif status == 'worker':
-            window.Element('listEventsWorker').Update(values = information_array)
-
-
-def AddEvent(status, name, date, login):
-    with conn.cursor() as curs:
-        curs.execute(f'''select count(*) from event''')
-        id = curs.fetchone()
-        curs.execute(f'''select {status}_id from {status} where {status}_login = '{login}' ''')
-        id_human = curs.fetchone()
-        curs.execute(f'''insert into event (event_id, event_name, event_date, {status}_id) values ({id[0]+1}, '{name}', '{date}', {id_human[0]})''')       
-        conn.commit()
-        ShowEvents(status=status, login=login)  
 
 
 window = sg.Window('Window Title',  layoutMain, size = (1000, 600), resizable = True, element_justification = 'center')
@@ -249,9 +194,9 @@ while True:
                     window.Element('FullNameAccWorker').Update(dataHuman[0][2])
                     window.Element('PasswordAccWorker').Update(dataHuman[0][3])
                     window.Element('CompanyAccWorker').Update(dataHuman[0][4])
-                    ShowEvents(status='worker', login=values['Login1'])
+                    function.ShowEvents(status='worker', login=values['Login1'])
                 elif data[0] == 'false':
-                    employer(values['Login1'])
+                    functions.employer(values['Login1'])
                     window.Element('worker').Update(visible = False)
                     window.Element('buttons').Update(visible = False)
                     window.Element('registration').Update(visible = False)
@@ -264,7 +209,7 @@ while True:
                     window.Element('FullNameAccEmpl').Update(dataHuman[0][2])
                     window.Element('PasswordAccEmpl').Update(dataHuman[0][3])
                     window.Element('CompanyAccEmpl').Update(dataHuman[0][4])
-                    ShowEvents(status='employer', login=values['Login1'])
+                    functions.ShowEvents(status='employer', login=values['Login1'])
             elif data[0][1] == 'false' or data[1][1] == 'false':
                 window.Element('check').Update('Incorrect login or password')
     if event == 'Я - работодатель':
@@ -279,11 +224,11 @@ while True:
         window.Element('employerProfile').Update(visible = False)
         window.Element('employer').Update(visible = True)
     if event == 'EditProfileEmpl':
-        ChangeProfileHide(status='Empl', bool=False)
-        ChangeProfileShow(status='Empl', bool=True)
+        functions.ChangeProfileHide(status='Empl', bool=False)
+        functions.ChangeProfileShow(status='Empl', bool=True)
     if event == 'CancelEmpl':
-        ChangeProfileHide(status='Empl', bool=True)
-        ChangeProfileShow(status='Empl', bool=False)
+        functions.ChangeProfileHide(status='Empl', bool=True)
+        functions.ChangeProfileShow(status='Empl', bool=False)
         window.Element('FullNameAccEmplChange').Update('')
         window.Element('PasswordAccEmplChange').Update('')
         window.Element('CompanyAccEmplChange').Update('')
@@ -298,8 +243,8 @@ while True:
             window.Element('PasswordAccEmpl').Update(f'''{values['PasswordAccEmplChange']}''')
         elif values['CompanyAccEmplChange']:
             window.Element('CompanyAccEmpl').Update(f'''{values['CompanyAccEmplChange']}''')
-        ChangeProfileHide(status='Empl', bool=True)
-        ChangeProfileShow(status='Empl', bool=False)
+        functions.ChangeProfileHide(status='Empl', bool=True)
+        functions.ChangeProfileShow(status='Empl', bool=False)
     if event == 'ProfileWorker':
         window.Element('workerProfile').Update(visible = True)
         window.Element('worker').Update(visible = False)
@@ -307,11 +252,11 @@ while True:
         window.Element('workerProfile').Update(visible = False)
         window.Element('worker').Update(visible = True)
     if event == 'EditProfileWorker':
-        ChangeProfileHide(status='Worker', bool=False)
-        ChangeProfileShow(status='Worker', bool=True)
+        functions.ChangeProfileHide(status='Worker', bool=False)
+        functions.ChangeProfileShow(status='Worker', bool=True)
     if event == 'CancelWorker':
-        ChangeProfileHide(status='Worker', bool=True)
-        ChangeProfileShow(status='Worker', bool=False)
+        functions.ChangeProfileHide(status='Worker', bool=True)
+        functions.ChangeProfileShow(status='Worker', bool=False)
         window.Element('FullNameAccWorkerChange').Update('')
         window.Element('PasswordAccWorkerChange').Update('')
         window.Element('CompanyAccWorkerChange').Update('')
@@ -326,8 +271,8 @@ while True:
             window.Element('PasswordAccWorker').Update(f'''{values['PasswordAccWorkerChange']}''')
         elif values['CompanyAccWorkerChange']:
             window.Element('CompanyAccWorker').Update(f'''{values['CompanyAccWorkerChange']}''')
-        ChangeProfileHide(status='Worker', bool=True)
-        ChangeProfileShow(status='Worker', bool=False)
+        functions.ChangeProfileHide(status='Worker', bool=True)
+        functions.ChangeProfileShow(status='Worker', bool=False)
     if event == 'OpenListEmpl':
         window.Element('layoutEvents').Update(visible=True)
         window.Element('employer').Update(visible=False)
@@ -342,7 +287,7 @@ while True:
         window.Element('worker').Update(visible=True)  
     if event == 'AddEventEmpl':
         if values['NameEventEmpl'] != '' and values['DateEventEmpl'] != '':
-            AddEvent(status='employer', name=values['NameEventEmpl'], date=values['DateEventEmpl'], login=window.Element('LoginAccEmpl').get())
+            functions.AddEvent(status='employer', name=values['NameEventEmpl'], date=values['DateEventEmpl'], login=window.Element('LoginAccEmpl').get())
             window.Element('check').Update('')
         else:
             window.Element('check').Update('Some inputs are empty')
@@ -350,7 +295,7 @@ while True:
         window.Element('DateEventEmpl').Update('')
     if event == 'AddEventWorker':
         if values['NameEventWorker'] != '' and values['DateEventWorker'] != '':
-            AddEvent(status='worker', name=values['NameEventWorker'], date=values['DateEventWorker'], login=window.Element('LoginAccWorker').get())
+            functions.AddEvent(status='worker', name=values['NameEventWorker'], date=values['DateEventWorker'], login=window.Element('LoginAccWorker').get())
             window.Element('check').Update('')
         else:
             window.Element('check').Update('Some inputs are empty')
@@ -477,7 +422,7 @@ while True:
             print(window.Element('listEventsWorker').get()[0][0:-12])
             curs.execute(f'''delete from event where event_name = '{window.Element('listEventsWorker').get()[0][0:-12]}' ''')
             conn.commit()
-            ShowEvents(status='worker', login=values['Login1'])
+            functions.ShowEvents(status='worker', login=values['Login1'])
         window.Element('NameEventWorker').Update('')
         window.Element('DateEventWorker').Update('')
     if event == 'DeleteEventEmpl':
@@ -485,7 +430,7 @@ while True:
             print(window.Element('listEventsEmpl').get()[0][0:-12])
             curs.execute(f'''delete from event where event_name = '{window.Element('listEventsEmpl').get()[0][0:-12]}' ''')
             conn.commit()
-            ShowEvents(status='employer', login=values['Login1'])
+            functions.ShowEvents(status='employer', login=values['Login1'])
         window.Element('NameEventEmpl').Update('')
         window.Element('DateEventEmpl').Update('')
     if event == 'Вход2':
